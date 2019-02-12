@@ -102,7 +102,6 @@ const vis: TreemapVisualization = {
     const rateField = measures[1] ? measures[1] : calculated[0]
     
     const format = formatType(measures[0].value_format) || ((s: any): string => s.toString())
-    const formatRate = formatType(rateField.value_format) || ((s: any): string => s.toString())
 
     const colorScale: d3.ScaleOrdinal<string, null> = d3.scaleOrdinal()
     const color = colorScale.range(config.color_range)
@@ -149,11 +148,12 @@ const vis: TreemapVisualization = {
       .on('click', (d) => console.log(d))
       .on('mouseenter', (d: any) => {
         const ancestors = d.ancestors()
+        const rate = (d && d.data && d.data.data && rateField && rateField.name && d.data.data[rateField.name]) ? d.data.data[rateField.name].value : 0
         breadcrumb.text(
           ancestors.map((p: any) => p.data.name)
             .slice(0, -1)
             .reverse()
-            .join('-') + ': ' + format(d.value) 
+            .join('-') + ': ' + format(d.value) + '  rate:'+ rate
         )
         svg.selectAll('g.node rect')
           .style('stroke', null)
@@ -174,10 +174,10 @@ const vis: TreemapVisualization = {
       .attr('height', (d: any) => d.y1 - d.y0)
       .style('fill', (d: any) => {
         if (d.depth === 0) return 'none'
-        if (d.depth === 1) { 
+        if (d.depth > 0 && d.children ) { 
            return '#999'
         } 
-        const colors: any[] = ['green', 'red']
+        const colors: any[] = config.color_range
         const scale = d3.scaleLinear()
           .domain([0, 1])
           .range(colors)  
