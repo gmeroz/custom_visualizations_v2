@@ -66,7 +66,7 @@ const vis: TreemapVisualization = {
       type: 'array',
       label: 'Color Range',
       display: 'colors',
-      default: ['#dd3333', '#80ce5d', '#f78131', '#369dc1', '#c572d3', '#36c1b3', '#b57052', '#ed69af']
+      default: ['green', 'red']
     }
   },
   // Set up the initial state of the visualization
@@ -78,16 +78,31 @@ const vis: TreemapVisualization = {
     if (!handleErrors(this, queryResponse, {
       min_pivots: 0, max_pivots: 0,
       min_dimensions: 1, max_dimensions: undefined,
-      min_measures: 1, max_measures: 1
+      min_measures: 1, max_measures: 2
     })) return
+    
 
     const width = element.clientWidth
     const height = element.clientHeight
 
-    const dimensions = queryResponse.fields.dimension_like
-    const measure = queryResponse.fields.measure_like[0]
-
-    const format = formatType(measure.value_format) || ((s: any): string => s.toString())
+    const dimensions = queryResponse.fields.dimensions
+    const measures = queryResponse.fields.measure_like
+    const calculated = queryResponse.fields.table_calculations
+    
+    if (measures.length === 1 && calculated.length === 0) {
+        if (this && this.addError) {
+      	  this.addError({
+ 			title: "Two Dimensions Required",
+ 			message: "missing a second measure or calculated field."
+ 			});
+ 		}
+        return;
+    }
+    
+    const rateField = measures[1] ? measures[1] : calculated[0]
+    
+    const format = formatType(measures[0].value_format) || ((s: any): string => s.toString())
+    const formatRate = formatType(rateField.value_format) || ((s: any): string => s.toString())
 
     const colorScale: d3.ScaleOrdinal<string, null> = d3.scaleOrdinal()
     const color = colorScale.range(config.color_range)
@@ -120,7 +135,7 @@ const vis: TreemapVisualization = {
       .attr('x', 4)
 
     const root = d3.hierarchy(burrow(data)).sum((d: any) => {
-      return 'data' in d ? d.data[measure.name].value : 0
+      return 'data' in d ? d.data[measures[0].name].value : 0
     })
     treemap(root)
 
@@ -138,7 +153,7 @@ const vis: TreemapVisualization = {
           ancestors.map((p: any) => p.data.name)
             .slice(0, -1)
             .reverse()
-            .join('-') + ': ' + format(d.value)
+            .join('-') + ': ' + format(d.value) 
         )
         svg.selectAll('g.node rect')
           .style('stroke', null)
@@ -157,14 +172,18 @@ const vis: TreemapVisualization = {
       .attr('id', (d, i) => 'rect-' + i)
       .attr('width', (d: any) => d.x1 - d.x0)
       .attr('height', (d: any) => d.y1 - d.y0)
-      .style('fill', (d) => {
+      .style('fill', (d: any) => {
         if (d.depth === 0) return 'none'
-        const ancestor: string = d.ancestors().map((p) => p.data.name).slice(-2, -1)[0]
-        const colors: any[] = [color(ancestor), '#ddd']
+        if (d.depth === 1) { 
+           return '#999'
+        } 
+        const colors: any[] = ['green', 'red']
         const scale = d3.scaleLinear()
-          .domain([1, 6.5])
-          .range(colors)
-        return scale(d.depth)
+          .domain([0, 1])
+          .range(colors)  
+          
+        const result = scale(((d && d.data && d.data.data && rateField && rateField.name && d.data.data[rateField.name]) ? d.data.data[rateField.name].value : 0) )  
+        return result
       })
 
     cell.append('clipPath')
