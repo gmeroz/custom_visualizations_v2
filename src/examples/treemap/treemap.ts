@@ -80,7 +80,6 @@ const vis: TreemapVisualization = {
       min_dimensions: 1, max_dimensions: undefined,
       min_measures: 1, max_measures: 2
     })) return
-    
 
     const width = element.clientWidth
     const height = element.clientHeight
@@ -92,9 +91,9 @@ const vis: TreemapVisualization = {
     if (measures.length === 1 && calculated.length === 0) {
         if (this && this.addError) {
       	  this.addError({
- 			title: "Two Dimensions Required",
- 			message: "missing a second measure or calculated field."
- 			});
+ 			title: 'Two Dimensions Required',
+ 			message: 'missing a second measure or calculated field.'
+ 			})
  		}
         return;
     }
@@ -102,9 +101,6 @@ const vis: TreemapVisualization = {
     const rateField = measures[1] ? measures[1] : calculated[0]
     
     const format = formatType(measures[0].value_format) || ((s: any): string => s.toString())
-
-    const colorScale: d3.ScaleOrdinal<string, null> = d3.scaleOrdinal()
-    const color = colorScale.range(config.color_range)
 
     data.forEach((row: Row) => {
       row.taxonomy = {

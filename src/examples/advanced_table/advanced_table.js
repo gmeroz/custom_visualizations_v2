@@ -1,6 +1,7 @@
 import { options } from './options.js';
 import GlobalConfig from './globalConfig.js';
 import PivotHeader from './pivotHeader.js';
+import * as d3 from "d3";
 
 /* eslint-disable arrow-body-style, no-undef, no-use-before-define */
 
@@ -989,6 +990,10 @@ const setPivotHeaders = () => {
   }
 };
 
+const addSparklines = (data) => {
+    console.log("====")
+}
+
 // This is called from updateAsync once we are ready to display (prevents early
 // displaying before CSS files have been downloaded and applied).
 const hideOverlay = (vis, element, config) => {
@@ -1117,7 +1122,7 @@ looker.plugins.visualizations.add({
     autoSize();
     setPivotHeaders();
     adjustFonts();
-
+    addSparklines(this.agData.formattedData);
     done();
   },
 });
